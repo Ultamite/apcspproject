@@ -15,11 +15,9 @@ false = pd.read_csv("News_dataset/Fake.csv", encoding='latin-1').fillna("")
 true["true_or_false"] = "True"
 false["true_or_false"] = "False"
 
-# 2. Combine and Sample IMMEDIATELY
+# 2. Combine and Sample
 data = pd.concat([true, false])
 
-# Taking 2000 random samples to save memory
-# random_state=42 ensures you get the same "random" set every time you run it
 data = data.sample(n=5000, random_state=42).reset_index(drop=True)
 
 # 3. Preprocessing
@@ -27,18 +25,16 @@ data["content"] = data["title"] + " " + data["text"]
 stop_words = set(stopwords.words('english'))
 
 def preprocess(text_input):
-    # Traversal and Loop: Explicitly iterating through the tokens
+    # Traversal and Loop
     tokens = word_tokenize(text_input)
     filtered_list = []
     
     for word in tokens:
-        # Conditional: Checking multiple criteria
         if word.lower() not in stop_words and word.isalpha():
             filtered_list.append(word.lower())
             
     return " ".join(filtered_list)
 
-# Function Call with 'content' as the argument through apply
 data["content"] = data["content"].apply(preprocess)
 
 # 4. Prepare Features and Labels
@@ -48,16 +44,15 @@ y = data["true_or_false"].values.ravel()
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # 5. Build Pipeline and Grid Search
-# We don't need the FunctionTransformer here because we already preprocessed X
 pipeline = Pipeline([
     ('tfidf', TfidfVectorizer()),
     ('clf', LogisticRegression(max_iter=1000))
 ])
 
 param_grid = {
-    'tfidf__max_features': [1000, 2000], # Added to help your PC manage memory
+    'tfidf__max_features': [1000, 2000],
     'clf__C': [0.1, 1, 10, 100],
-    'clf__penalty': ['l2'], # 'l1' requires specific solvers, simplified for stability
+    'clf__penalty': ['l2'],
     'clf__solver': ['liblinear'] 
 }
 
@@ -65,7 +60,7 @@ GS = GridSearchCV(estimator=pipeline,
                   param_grid=param_grid, 
                   cv=5, 
                   scoring='accuracy',
-                  n_jobs=-1) # Uses all CPU cores to speed up the grid search
+                  n_jobs=-1) 
 
 # 6. Fit and Evaluate
 print("Starting Grid Search...")
@@ -97,4 +92,5 @@ while True:
     if pred == "False":
         print("This news appears to be False")
     elif pred == "True":
+
         print("This news appears to be True")
